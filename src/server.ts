@@ -23,11 +23,11 @@ preMiddleware(app);
 
 // Routes
 app.get("/", (req: Request, res: Response) => {
-  res.json({ message: "Hello From Driver API " + process.env.APP_NAME  })
+  res.json({ message: "Hello From " + process.env.APP_NAME  })
 })
 
 app.get("/ping", (req: Request, res: Response) => {
-  res.json({ message: "Hello From Driver API " + process.env.APP_NAME })
+  res.json({ message: "Hello From " + process.env.APP_NAME })
 })
 
 // Main Routes

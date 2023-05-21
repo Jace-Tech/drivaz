@@ -12,7 +12,6 @@ const driverSchema = new mongoose.Schema<IDriver>({
     required: true
   },
   image: String,
-  coverImage: String,
   licenseNumber: {
     type: String,
     required: true

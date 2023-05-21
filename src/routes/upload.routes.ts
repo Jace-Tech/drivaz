@@ -17,7 +17,7 @@ const uploadRoute = Router()
 // UPLOAD PICTURES
 uploadRoute.post("/", async (req: Request, res: Response) => {
   if(!req.body.image) throw new BadRequestError("Image not specified")
-  const image = await cloudinary.uploader.upload(req.body.image)
+  const image = await cloudinary.uploader.upload(req.body.image, { folder: "drivaz" })
   const data = {
     url: image.secure_url,
     type: image.type,

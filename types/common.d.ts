@@ -11,3 +11,13 @@ interface IDriver {
   createdAt?: string;
   updatedAt?: string;
 }
+
+interface IUpload {
+  url: string;
+  type: string;
+  width: string | number;
+  height: string | number;
+  size: string;
+}
+
+interface IUploadType { type: string, uri: string; name: string }

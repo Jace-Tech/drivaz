@@ -5,3 +5,5 @@ export const CREATE_DRIVER_ENDPOINT = BASE_URL + "/driver"
 export const GET_ONE_DRIVER_ENDPOINT = BASE_URL + "/driver/:id"
 export const UPDATE_DRIVER_ENDPOINT = BASE_URL + "/driver/:id"
 export const DELETE_DRIVER_ENDPOINT = BASE_URL + "/driver/:id"
+
+export const UPLOAD_ENDPOINT = BASE_URL + "/upload"

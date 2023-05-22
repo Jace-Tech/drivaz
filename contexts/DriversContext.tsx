@@ -1,11 +1,11 @@
 import React, { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
-import { deleteDriver, fetchDrivers, updateDriver } from "../apis/drivers.api";
-import { AlertDialog, Button, useDisclose } from "native-base";
+import { createDriver, deleteDriver, fetchDrivers, updateDriver } from "../apis/drivers.api";
 import { json, logger } from "../utils/helpers";
 
 interface DriversContextProps { 
   drivers: IDriver[];
   handleUpdateDriver: (data: IDriver) => Promise<{ data: any, success: boolean, message: string }>;
+  handleCreateDriver: (data: IDriver) => Promise<{ data: any, success: boolean, message: string }>;
   handleDeleteDriver: (id: string) => Promise<{ data: any, success: boolean, message: string }>;
 }
 const DriversContext = createContext({} as DriversContextProps);
@@ -28,10 +28,14 @@ const DriversContextProvider: React.FC<DriversContextProviderProps> = ({ childre
   const handleUpdateDriver = async (data: IDriver) => {
     const result = await updateDriver(data)
     if(!result?.success) return result
-    
-    const index = drivers.findIndex(driver => driver._id === data._id)
-    if(!index && index !== 0) return result
-    
+    populateDriversState()
+    return result
+  }
+
+  // CREATE DRIVER
+  const handleCreateDriver = async (data: IDriver) => {
+    const result = await createDriver(data)
+    if(!result?.success) return result
     populateDriversState()
     return result
   }
@@ -39,14 +43,9 @@ const DriversContextProvider: React.FC<DriversContextProviderProps> = ({ childre
   // DELETE DRIVER
   const handleDeleteDriver = async (id: string) => {
     const result = await deleteDriver(id)
+    logger(json({result}))
     if(!result?.success) return result
-    
-    const index = drivers.findIndex(driver => driver.driverIdentificationNumber === id)
-    if(!index) return result
-
-    const newData = {...drivers}
-    newData.splice(index, 1)
-    setDrivers(newData)
+    populateDriversState()
     return result
   }
 
@@ -56,12 +55,17 @@ const DriversContextProvider: React.FC<DriversContextProviderProps> = ({ childre
   }, [])
 
   useEffect(() => {
-    console.log({drivers})
+    logger({drivers})
   }, [drivers])
 
   
   return (
-    <DriversContext.Provider value={{ drivers, handleUpdateDriver, handleDeleteDriver }}>
+    <DriversContext.Provider value={{
+      drivers, 
+      handleCreateDriver, 
+      handleUpdateDriver, 
+      handleDeleteDriver,
+    }}>
       {children}
     </DriversContext.Provider>
   )

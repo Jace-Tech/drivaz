@@ -1,13 +1,14 @@
 import React from 'react'
-import { Avatar, Box, HStack, themeTools, useTheme, Pressable, VStack, Text, useDisclose, SlideFade } from 'native-base'
+import { Avatar, Box, HStack, themeTools, Pressable, VStack, Text } from 'native-base'
 import { getSubName } from '../utils/helpers'
 import { useRouter } from 'expo-router'
 
 interface DriverCardProps extends IDriver { }
 
-const DriverCard: React.FC<DriverCardProps> = ({ name, image, driverIdentificationNumber: DIN, }) => {
-  const randomColor = themeTools.randomColor()
+const DriverCard: React.FC<DriverCardProps> = React.memo(({ name, image, driverIdentificationNumber: DIN, }) => {
+  const randomColor = themeTools.randomColor({string: name})
   const { push } = useRouter()
+
   return (
     <Pressable onPress={() => push(`driver/${DIN}`)} >
       {({ isPressed }) => (
@@ -25,6 +26,6 @@ const DriverCard: React.FC<DriverCardProps> = ({ name, image, driverIdentificati
       )}
     </Pressable>
   )
-}
+})
 
 export default DriverCard

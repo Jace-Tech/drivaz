@@ -26,14 +26,13 @@ export default function RootLayout() {
 }
 
 const RootLayoutNav = () => {
-
   return (
     <NativeBaseProvider>
       <DriversContextProvider>
         <Stack initialRouteName='index'>
           <Stack.Screen name="index" options={{ header: (props) => <Header {...props} /> }} />
-          <Stack.Screen name="add" options={{}} />
-          <Stack.Screen name="search" options={{}} />
+          <Stack.Screen name="add" options={{ headerTitle: "Add Driver"}} />
+          <Stack.Screen name="search" options={{ headerTitle: "Search Driver"}} />
         </Stack>
       </DriversContextProvider>
     </NativeBaseProvider>

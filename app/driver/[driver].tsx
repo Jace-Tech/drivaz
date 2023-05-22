@@ -1,12 +1,12 @@
 import { ImageBackground, Dimensions, Platform } from 'react-native'
 import React, { memo, useCallback, useEffect, useState } from 'react'
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
-import { Avatar, Box, Button, FormControl, HStack, Icon, IconButton, Input, KeyboardAvoidingView, Pressable, ScrollView, Spacer, Spinner, Text, VStack, useClipboard, useDisclose, useToast } from 'native-base'
+import { Avatar, Box, Button, Center, CheckIcon, FormControl, HStack, Icon, IconButton, Input, KeyboardAvoidingView, Pressable, ScrollView, Select, Spacer, Spinner, Text, VStack, useClipboard, useDisclose, useToast } from 'native-base'
 import { DEFAULT_COLOR, DEFAULT_PAD } from '../../constants/Global'
 import { useDriversContext } from '../../contexts/DriversContext'
 import Feather from '@expo/vector-icons/Feather'
 import AntDesign from '@expo/vector-icons/AntDesign'
-import { except, formatDate, getSubName, splitWords } from '../../utils/helpers'
+import { except, formatDate, getSubName, logger, splitWords } from '../../utils/helpers'
 import DeleteModal from '../../components/DeleteModal'
 import ToastAlert from '../../components/ToastAlert'
 
@@ -24,7 +24,7 @@ const Driver: React.FC<DriverProps> = () => {
   const { onCopy, hasCopied } = useClipboard()
   const toast = useToast()
   const { replace, back } = useRouter()
-  const { isOpen: isLoading, onOpen: openLoading, onClose: closeLoading} = useDisclose()
+  const { isOpen: isLoading, onOpen: openLoading, onClose: closeLoading } = useDisclose()
 
 
   // GET DRIVERS INFO
@@ -37,7 +37,7 @@ const Driver: React.FC<DriverProps> = () => {
 
     // GET THE DRIVER DATA FROM THAT GLOBAL STATE
     const data = drivers?.find(_driver => _driver.driverIdentificationNumber === driver)
-    if (!data){
+    if (!data) {
       replace("/")
       return
     }
@@ -55,37 +55,64 @@ const Driver: React.FC<DriverProps> = () => {
   // HANDLE INPUT TEXTS
   const handleChangeText = useCallback((text: string, key: string) => {
     const keyName = Object.keys(editingData!).find(name => name.includes(key.trim()))
-    if(!keyName) return
-    setEditingData(prevData => ({...prevData, [keyName]: text} as any))
+    if (!keyName) return
+    setEditingData(prevData => ({ ...prevData, [keyName]: text } as any))
   }, [editingData, setEditingData])
 
-  // TODO: REMEMBER TO SET UP MODAL FOR DELETING
-  // TODO: SET UP ADD SCREEN
   // TODO: SET SEARCH SCREEN
 
   // DELETE DRIVER
   const handleDeleteDriverAction = async () => {
     const data = await handleDeleteDriver(driver as string)
-    if(data && data?.success)  {
+    if (!data?.success) {
       setToastId(toast.show({
-        render: ({ id }) => <ToastAlert {...{id, isClosable: true, variant: "solid", title: "", close: () => toast.close(id)}}/>
+        render: ({ id }) => (
+          <ToastAlert {...{
+            id, isClosable: true,
+            status: "error",
+            variant: "subtle",
+            title: data?.message,
+            close: () => toast.close(id)
+          }}
+          />
+        )
       }))
     }
+    else {
+      setToastId(toast.show({
+        render: ({ id }) => (
+          <ToastAlert {...{
+            id, isClosable: true,
+            variant: "subtle",
+            status: "success",
+            title: data?.message,
+            close: () => toast.close(id)
+          }}
+          />
+        )
+      }))
+    }
+
+    replace("/")
+    setDeleteData(false)
   }
 
   // UPDATE DRIVER
   const handleUpdateDriverAction = async () => {
     openLoading()
     const data = await handleUpdateDriver(editingData!)
-    console.log({data})
-    if(data && data?.success)  {
+    logger({ data })
+    if (data && data?.success) {
       setToastId(toast.show({
-        render: ({ id }) => <ToastAlert {...{id, status: "success", isClosable: true, variant: "solid", title: data?.message, close: () => toast.close(id)}}/>
+        render: ({ id }) => <ToastAlert {...{ id, status: "success", isClosable: true, variant: "subtle", title: data?.message, close: () => toast.close(id) }} />
       }))
     }
     else {
       setToastId(toast.show({
-        render: ({ id }) => <ToastAlert {...{id, status: "error", isClosable: true, variant: "solid", title: data?.message, close: () => toast.close(id)}}/>
+        render: ({ id }) => <ToastAlert {...{
+          id,
+          status: "error", title: data?.message, close: () => toast.close(id)
+        }} />
       }))
     }
     closeLoading()
@@ -114,7 +141,7 @@ const Driver: React.FC<DriverProps> = () => {
 
   const IMAGE_HEIGHT = Dimensions.get("screen").height / 3.5
   const detailsData = Object.entries({
-    ...except(editingData, "driverIdentificationNumber", "_id", "__v", "updatedAt", "createdAt", "licenseNumber"),
+    ...except(editingData, "driverIdentificationNumber", "_id", "image", "__v", "updatedAt", "createdAt", "licenseNumber"),
     "license Number": editingData?.licenseNumber!,
     "date registered": formatDate(editingData?.createdAt!),
   })
@@ -123,7 +150,7 @@ const Driver: React.FC<DriverProps> = () => {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <Box h={"full"}>
+      <Box h={"full"} safeAreaBottom>
 
         {/* BACKGROUND SECTION */}
         <ImageBackground
@@ -148,7 +175,7 @@ const Driver: React.FC<DriverProps> = () => {
         {/* AVATAR SECTION */}
         <Box px={DEFAULT_PAD} mt={-16} pb={5}>
           <HStack alignItems={"center"} space={3} >
-            <Avatar size={"2xl"} bgColor={DEFAULT_COLOR} borderColor={"white"} borderWidth={4}>
+            <Avatar size={"2xl"} source={{ uri: driverData?.image }} bgColor={DEFAULT_COLOR} borderColor={"white"} borderWidth={4}>
               {DP ?? "DP"}
             </Avatar>
 
@@ -164,9 +191,10 @@ const Driver: React.FC<DriverProps> = () => {
           </HStack>
         </Box>
         {/* END AVATAR SECTION */}
-        <ScrollView py={3} px={DEFAULT_PAD}>
-          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
 
+        {/* DETAILS SECTION */}
+        <ScrollView px={DEFAULT_PAD} h={"auto"} pb={8}>
+          <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
             {/* DETAILS SECTION */}
             <Box>
               <VStack space={4}>
@@ -193,13 +221,16 @@ const Driver: React.FC<DriverProps> = () => {
             {/* END SAVE BUTTON SECTION */}
           </KeyboardAvoidingView>
         </ScrollView>
+        {/* END DETAILS SECTION */}
 
-        <DeleteModal 
-          handleAction={handleDeleteDriverAction}
+        {/* MODAL SECTION */}
+        <DeleteModal
+          handleAction={() => handleDeleteDriverAction()}
           isOpen={deleteData}
           onClose={() => setDeleteData(false)}
           driver={driverData}
         />
+        {/* END MODAL */}
       </Box>
     </>
   )
@@ -225,23 +256,48 @@ const DetailCard: React.FC<DetailCardProp> = memo(({ title, value, isChanging, h
   return (
     <>
       {isChanging ? (
-        <HStack>
-          <VStack flex={1}>
-            <Text color={"coolGray.800"} fontSize={"xs"} letterSpacing={1} textTransform={"uppercase"} fontWeight={"bold"}>{title}: </Text>
-            <FormControl isRequired mt={2}>
-              <Input
-                value={value}
-                fontSize={"md"}
-                onChangeText={(text) => handleChangeText(text, splitWords(title))}
-                color={"coolGray.700"}
-                InputRightElement={(
-                  <IconButton onPress={handleCancel} variant={"ghost"} rounded={"full"} mr={1} _icon={{ as: AntDesign, name: "close" }} />
-                )}
-              />
-            </FormControl>
-          </VStack>
 
-        </HStack>
+        <>
+          {title === "gender" ? (
+            <HStack w={"full"} alignItems={"stretch"}>
+              <VStack flex={1}>
+                <Text color={"coolGray.800"} fontSize={"xs"} letterSpacing={1} textTransform={"uppercase"} fontWeight={"bold"}>{title}: </Text>
+                <HStack>
+                  <Select flex={1} mt={2} selectedValue={value} minWidth="200" accessibilityLabel="Select Gender" placeholder="Select Gender" _selectedItem={{
+                    bg: "coolGray.200",
+                    endIcon: <CheckIcon size="5" />
+                  }} onValueChange={itemValue => handleChangeText(itemValue, splitWords(title))}>
+                    <Select.Item label="" value="" disabled />
+                    <Select.Item label="Male" value="male" />
+                    <Select.Item label="Female" value="female" />
+                  </Select>
+
+                  <Center>
+                    <IconButton onPress={handleCancel} variant={"ghost"} rounded={"full"} mr={1} _icon={{ as: AntDesign, name: "close" }} />
+                  </Center>
+                </HStack>
+              </VStack>
+            </HStack>
+          ) : (
+            <HStack>
+              <VStack flex={1}>
+                <Text color={"coolGray.800"} fontSize={"xs"} letterSpacing={1} textTransform={"uppercase"} fontWeight={"bold"}>{title}: </Text>
+                <FormControl isRequired mt={2}>
+                  <Input
+                    value={value}
+                    fontSize={"md"}
+                    onChangeText={(text) => handleChangeText(text, splitWords(title))}
+                    color={"coolGray.700"}
+                    InputRightElement={(
+                      <IconButton onPress={handleCancel} variant={"ghost"} rounded={"full"} mr={1} _icon={{ as: AntDesign, name: "close" }} />
+                    )}
+                  />
+                </FormControl>
+              </VStack>
+            </HStack>
+          )}
+
+        </>
       ) : (
         <HStack alignItems={"center"}>
           <VStack flex={1}>

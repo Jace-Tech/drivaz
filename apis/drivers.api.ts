@@ -1,13 +1,15 @@
-import { CREATE_DRIVER_ENDPOINT, DELETE_DRIVER_ENDPOINT, GET_ALL_DRIVERS_ENDPOINT, GET_ONE_DRIVER_ENDPOINT, UPDATE_DRIVER_ENDPOINT } from "./endpoint"
+import { json, logger } from "../utils/helpers"
+import { CREATE_DRIVER_ENDPOINT, DELETE_DRIVER_ENDPOINT, GET_ALL_DRIVERS_ENDPOINT, GET_ONE_DRIVER_ENDPOINT, UPDATE_DRIVER_ENDPOINT, UPLOAD_ENDPOINT } from "./endpoint"
 
 // GENERATE REQUEST OPTIONS
-const getPostOptions = (data: any, method: string = "POST") => {
+const getPostOptions = (data: any, method: "POST" | "GET" | "PUT" | "PATCH" | "DELETE" = "POST", override: RequestInit = {}) => {
   const options: RequestInit = {
     method,
     body: JSON.stringify(data),
     headers: {
       "Content-Type": "application/json"
-    }
+    },
+    ...override
   }
   return options
 }
@@ -37,7 +39,7 @@ export const fetchOneDriver = async (id: string) => {
 // DELETE DRIVER
 export const deleteDriver = async (id: string) => {
   try {
-    const request = await fetch(DELETE_DRIVER_ENDPOINT.replace(":id", id))
+    const request = await fetch(DELETE_DRIVER_ENDPOINT.replace(":id", id), { method: "DELETE" })
     const result = await request.json()
     return result
   } catch (error: any) {
@@ -59,6 +61,14 @@ export const updateDriver = async (data: IDriver) => {
 // CREATES A DRIVER
 export const createDriver = async (data: IDriver) => {
   try {
+    if(data?.image) {
+      logger(json({image: data.image}))
+      const reqImage = await fetch(UPLOAD_ENDPOINT, getPostOptions({ image: data.image }))
+      const response = await reqImage.json()
+      logger(json({response}))
+      if(!response.success) throw new Error(response?.message)
+      data.image = response?.data?.url
+    }
     const request = await fetch(CREATE_DRIVER_ENDPOINT, getPostOptions(data))
     const result = await request.json()
     return result

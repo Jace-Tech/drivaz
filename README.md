@@ -21,3 +21,5 @@ A simple Driver'c CRUD Application
 - PACKAGES:
   I didn’t know if I was supposed to use any package for this task, so if I’m not supposed to; I’m sorry and I used some, and If I’m allowed to use some then AWESOME!
 
+Live Demo [here](exp://exp.host/@jace-dev/drivaz?release-channel=default)
+> You Must have expo installed in your device to test it
